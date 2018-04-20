@@ -53,7 +53,35 @@ class Data:
         for no in personal_data.ix[:,"TERMINALNO"]:
             if not no in nos:
                 nos.append(no)
-        print("processing from ", start, " to ", end," : ",nos)
+        if len(nos) == 1:
+            self.personal_data[nos[0]] = dict()
+            self.personal_data[nos[0]]["start"] = start
+            self.personal_data[nos[0]]["end"] = end
+            print("processing personal data from ", start, " to ", end, " : ", nos)
+            # print(personal_data)
+            tag = start
+            trip_id = personal_data.ix[start, "TRIP_ID"]
+            start_per = start
+            end_per = start
+            while tag < end:
+                if personal_data.ix[tag, "TRIP_ID"] != trip_id:
+                    end_per = tag - 1
+                    self.process_single_trip(personal_data,start_per, end_per)
+                    start_per = tag
+                    trip_id = personal_data.ix[tag, "TRIP_ID"]
+                tag += 1
+                if tag == end:
+                    end_per = tag - 1
+                    self.process_single_trip(personal_data,start_per, end_per)
+
+    def process_single_trip(self,personal_data,start,end):
+        trip_data = personal_data.ix[start:end,columns]
+        ids = []
+        for id in trip_data.ix[:,"TRIP_ID"]:
+            if not id in ids:
+                ids.append(id)
+        print("processing single trip data from ", start, " to ", end, " : ", ids)
+
 
 if __name__ == "__main__":
     data = Data(path,columns)
