@@ -25,7 +25,7 @@ class Data:
     def load_data(self):
         self.data_from_file = pd.read_csv(self.path)
         self.data_from_file.columns = self.columns
-        self.data_from_file = self.data_from_file.sort_values(by=["TERMINALNO","TIME"],ascending=[1,0])
+        self.data_from_file = self.data_from_file.sort_values(by=["TERMINALNO","TRIP_ID"],ascending=[1,1])
 
     def split_data(self):
         tag = 0
@@ -48,6 +48,7 @@ class Data:
 
     def process_personal(self,start,end):
         personal_data = self.data_from_file.ix[start:end,columns]
+        personal_data = personal_data.sort_values(by=["TIME"],ascending=[1])
         nos = []
         # testing part to see if two or more terminal no in a group
         for no in personal_data.ix[:, "TERMINALNO"]:
