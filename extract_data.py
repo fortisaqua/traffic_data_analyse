@@ -72,12 +72,12 @@ class Data:
 
         return data
 
-if __name__ == "__main__":
-    data = Data(path,columns)
-    time1 = time.time()
-    data.load_data()
-    data.split_data()
-    time2 = time.time()
-    print((time2-time1))
-    print(type(data.data_from_file))
-    # for i in range(data.data_from_file.shape):
+# if __name__ == "__main__":
+#     data = Data(path,columns)
+#     time1 = time.time()
+#     data.load_data()
+#     data.split_data()
+#     time2 = time.time()
+#     print((time2-time1))
+#     print(type(data.data_from_file))
+#     # for i in range(data.data_from_file.shape):
