@@ -54,10 +54,10 @@ class Data:
         personal_data = personal_data.sort_values(by=["TRIP_ID", "TIME"], ascending=[1, 1])
         self.personal_datas[terminal_no] = dict()
         personal_array = np.array(personal_data.ix[:,valid])
-        self.personal_datas[terminal_no]["original"] = personal_data
+        # self.personal_datas[terminal_no]["original"] = personal_data
         self.personal_datas[terminal_no]["data"] = personal_array[:,:-1]
         self.personal_datas[terminal_no]["y"] = personal_array[:,-1]
-        normed_speed = self.normalize_speed(personal_data)
+        # normed_speed = self.normalize_speed(personal_data)
         # for trip_id,trip_data in personal_data.groupby("TRIP_ID"):
         #     self.personal_datas[terminal_no][trip_id] = trip_data
 
