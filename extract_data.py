@@ -8,7 +8,7 @@ import numpy as np
 path_train = "/data/dm/train.csv"  # 训练文件
 path_test = "/data/dm/test.csv"  # 测试文件
 
-path = "./PINGAN-2018-train_demo.csv"
+path = "data/dm/train.csv"
 columns = ["TERMINALNO", "TIME", "TRIP_ID", "LONGITUDE", "LATITUDE", "DIRECTION", "HEIGHT", "SPEED",
                         "CALLSTATE", "Y"]
 valid = ["TIME", "LONGITUDE", "LATITUDE", "DIRECTION", "HEIGHT", "SPEED",
@@ -25,7 +25,7 @@ class Data:
     def load_data(self):
         self.data_from_file = pd.read_csv(self.path)
         self.data_from_file.columns = self.columns
-        self.data_from_file = self.data_from_file.sort_values(by=["TERMINALNO","TRIP_ID"],ascending=[1,1])
+        self.data_from_file = self.data_from_file.groupby("TERMINALNO")
 
     def split_data(self):
         tag = 0
@@ -48,7 +48,7 @@ class Data:
 
     def process_personal(self,start,end):
         personal_data = self.data_from_file.ix[start:end,columns]
-        personal_data = personal_data.sort_values(by=["TIME"],ascending=[1])
+        # personal_data = personal_data.sort_values(by=["TIME"],ascending=[1])
         nos = []
         # testing part to see if two or more terminal no in a group
         for no in personal_data.ix[:, "TERMINALNO"]:
@@ -63,48 +63,6 @@ class Data:
             self.personal_datas[nos[0]]["data"] = personal_array[:,:-1]
             self.personal_datas[nos[0]]["y"] = personal_array[:,-1]
 
-    def split_personal(self,personal_data,start,end):
-        nos = []
-        # testing part to see if two or more terminal no in a group
-        for no in personal_data.ix[:, "TERMINALNO"]:
-            if not no in nos:
-                nos.append(no)
-        if len(nos) == 1:
-            self.personal_datas[nos[0]] = dict()
-            self.personal_datas[nos[0]]["start"] = start
-            self.personal_datas[nos[0]]["end"] = end
-            # print("processing personal data from ", start, " to ", end, " : ", nos)
-            tag = start
-            trip_id = personal_data.ix[start, "TRIP_ID"]
-            start_per = start
-            end_per = start
-            while tag < end:
-                if personal_data.ix[tag, "TRIP_ID"] != trip_id:
-                    end_per = tag - 1
-                    self.process_single_trip(personal_data, start_per, end_per)
-                    start_per = tag
-                    trip_id = personal_data.ix[tag, "TRIP_ID"]
-                tag += 1
-                if tag == end:
-                    end_per = tag - 1
-                    self.process_single_trip(personal_data, start_per, end_per)
-
-    def process_single_trip(self,personal_data,start,end):
-        trip_data = personal_data.ix[start:end,columns]
-        ids = []
-        for id in trip_data.ix[:,"TRIP_ID"]:
-            if not id in ids:
-                ids.append(id)
-        if len(ids) == 1:
-            trip_id = personal_data.ix[start,"TRIP_ID"]
-            terminal_no = personal_data.ix[start,"TERMINALNO"]
-            # print("processing single trip data from ", start, " to ", end, " : ", ids)
-            temp_data = np.array(trip_data.ix[:,valid])
-            self.personal_datas[terminal_no][trip_id] = dict()
-            self.personal_datas[terminal_no][trip_id]["data"] = temp_data[:,:-1]
-            self.personal_datas[terminal_no][trip_id]["y"] = temp_data[:,-1]
-            # self.personal_datas[terminal_no][str(trip_id)+"_"] = trip_data.ix[:,valid]
-            # print(type(self.personal_datas[terminal_no][trip_id]))
 
 if __name__ == "__main__":
     data = Data(path,columns)
