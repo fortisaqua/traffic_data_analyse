@@ -7,80 +7,52 @@ import numpy as np
 class Model():
     def __init__(self, args, training=True):
         self.args = args
-        if not training:
-            args.batch_size = 1
-            args.seq_length = 1
+        self.training = training
 
-        if args.model == 'rnn':
-            cell_fn = rnn.BasicRNNCell
-        elif args.model == 'gru':
-            cell_fn = rnn.GRUCell
-        elif args.model == 'lstm':
-            cell_fn = rnn.BasicLSTMCell
-        elif args.model == 'nas':
-            cell_fn = rnn.NASCell
-        else:
-            raise Exception("model type not supported: {}".format(args.model))
+    def build_model(self):
+        if self.args.model == 'lstm':
+            self.create_lstm()
 
+    def create_lstm(self):
+        self.X = tf.placeholder(
+            tf.float32, [None,self.args.time_step,self.args.input_size])
+        self.Y = tf.placeholder(
+            tf.float32, [None,self.args.time_step,self.args.output_size])
+
+
+        pred,final_state = self.lstm(self.X)
+
+    def lstm(self,X):
+        # 输入层、输出层权重、偏置
+        weights = {
+            'in': tf.Variable(tf.random_normal([self.args.input_size, self.args.rnn_size])),
+            'out': tf.Variable(tf.random_normal([self.args.rnn_size, 1]))
+        }
+        biases = {
+            'in': tf.Variable(tf.constant(0.1, shape=[self.args.rnn_size, ])),
+            'out': tf.Variable(tf.constant(0.1, shape=[1, ]))
+        }
+
+        batch_size = tf.shape(X)[0]
+        time_step = tf.shape(X)[1]
+        w_in = weights['in']
+        b_in = biases['in']
+        input = tf.reshape(X,[-1,self.args.input_size])
+        input_rnn = tf.matmul(input,w_in)+b_in
+        input_rnn = tf.reshape(input_rnn,[-1,time_step,self.args.rnn_size])
         cells = []
-        for _ in range(args.num_layers):
-            cell = cell_fn(args.rnn_size)
-            if training and (args.output_keep_prob < 1.0 or args.input_keep_prob < 1.0):
-                cell = rnn.DropoutWrapper(cell,
-                                          input_keep_prob=args.input_keep_prob,
-                                          output_keep_prob=args.output_keep_prob)
-            cells.append(cell)
-
-        self.cell = cell = rnn.MultiRNNCell(cells, state_is_tuple=True)
-
-        self.input_data = tf.placeholder(
-            tf.int32, [args.batch_size, args.seq_length])
-        self.targets = tf.placeholder(
-            tf.int32, [args.batch_size, args.seq_length])
-        self.initial_state = cell.zero_state(args.batch_size, tf.float32)
-
-        with tf.variable_scope('rnnlm'):
-            softmax_w = tf.get_variable("softmax_w",
-                                        [args.rnn_size, args.vocab_size])
-            softmax_b = tf.get_variable("softmax_b", [args.vocab_size])
-
-        embedding = tf.get_variable("embedding", [args.vocab_size, args.rnn_size])
-        inputs = tf.nn.embedding_lookup(embedding, self.input_data)
-
-        # dropout beta testing: double check which one should affect next line
-        if training and args.output_keep_prob:
-            inputs = tf.nn.dropout(inputs, args.output_keep_prob)
-
-        inputs = tf.split(inputs, args.seq_length, 1)
-        inputs = [tf.squeeze(input_, [1]) for input_ in inputs]
-
-        def loop(prev, _):
-            prev = tf.matmul(prev, softmax_w) + softmax_b
-            prev_symbol = tf.stop_gradient(tf.argmax(prev, 1))
-            return tf.nn.embedding_lookup(embedding, prev_symbol)
-
-        outputs, last_state = legacy_seq2seq.rnn_decoder(inputs, self.initial_state, cell, loop_function=loop if not training else None, scope='rnnlm')
-        output = tf.reshape(tf.concat(outputs, 1), [-1, args.rnn_size])
-
-
-        self.logits = tf.matmul(output, softmax_w) + softmax_b
-        self.probs = tf.nn.softmax(self.logits)
-        loss = legacy_seq2seq.sequence_loss_by_example(
-                [self.logits],
-                [tf.reshape(self.targets, [-1])],
-                [tf.ones([args.batch_size * args.seq_length])])
-        with tf.name_scope('cost'):
-            self.cost = tf.reduce_sum(loss) / args.batch_size / args.seq_length
-        self.final_state = last_state
-        self.lr = tf.Variable(0.0, trainable=False)
-        tvars = tf.trainable_variables()
-        grads, _ = tf.clip_by_global_norm(tf.gradients(self.cost, tvars),
-                args.grad_clip)
-        with tf.name_scope('optimizer'):
-            optimizer = tf.train.AdamOptimizer(self.lr)
-        self.train_op = optimizer.apply_gradients(zip(grads, tvars))
-
-        # instrument tensorboard
-        tf.summary.histogram('logits', self.logits)
-        tf.summary.histogram('loss', loss)
-        tf.summary.scalar('train_loss', self.cost)
+        for _ in range(self.args.num_layers):
+            with tf.variable_scope("lstm_cell_"+str(_)):
+                sub_cell = rnn.BasicLSTMCell(self.args.rnn_size)
+                if self.training and (self.args.output_keep_prob < 1.0 or self.args.input_keep_prob < 1.0):
+                    sub_cell = rnn.DropoutWrapper(sub_cell,input_keep_prob=self.args.input_keep_prob,
+                                              output_keep_prob=self.args.output_keep_prob)
+                cells.append(sub_cell)
+        cell = rnn.MultiRNNCell(cells,state_is_tuple=True)
+        init_state = cell.zero_state(self.args.batch_size,tf.float32)
+        output_rnn, final_state = tf.nn.dynamic_rnn(cell, input_rnn, initial_state=init_state, dtype=tf.float32)
+        output = tf.reshape(output_rnn,[-1,self.args.rnn_size])
+        w_out = weights['out']
+        b_out = biases['out']
+        pred = tf.matmul(output, w_out) + b_out
+        return pred, final_state
