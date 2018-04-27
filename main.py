@@ -41,7 +41,7 @@ def process():
                         help='directory to store tensorboard logs')
     parser.add_argument('--rnn_size', type=int, default=50,
                         help='size of RNN hidden state')
-    parser.add_argument('--num_layers', type=int, default=3,
+    parser.add_argument('--num_layers', type=int, default=2,
                         help='number of layers in the RNN')
     parser.add_argument('--model', type=str, default='lstm',
                         help='rnn, gru, lstm, or nas')
@@ -78,6 +78,8 @@ def process():
     args = parser.parse_args()
     args.vocab_size = 1
     data = read_csv()
+    model = Model(args)
+    model.create_lstm()
     with open(path_test) as lines:
         with(open(os.path.join(path_test_out, "test.csv"), mode="w")) as outer:
             writer = csv.writer(outer)

@@ -11,7 +11,7 @@ path_test = "/data/dm/test.csv"  # 测试文件
 path = "data/dm/train.csv"
 columns = ["TERMINALNO", "TIME", "TRIP_ID", "LONGITUDE", "LATITUDE", "DIRECTION", "HEIGHT", "SPEED",
                         "CALLSTATE", "Y"]
-valid = ["TIME", "LONGITUDE", "LATITUDE", "DIRECTION", "HEIGHT", "SPEED",
+valid = [ "LONGITUDE", "LATITUDE", "DIRECTION", "HEIGHT", "SPEED",
                         "CALLSTATE", "Y"]
 path_test_out = "model/"  # 预测结果输出路径为model/xx.csv,有且只能有一个文件并且是CSV格式。
 
@@ -54,7 +54,7 @@ class Data:
         personal_data = personal_data.sort_values(by=["TRIP_ID", "TIME"], ascending=[1, 1])
         self.personal_datas[terminal_no] = dict()
         personal_array = np.array(personal_data.ix[:,valid])
-        # self.personal_datas[terminal_no]["original"] = personal_data
+        self.personal_datas[terminal_no]["original"] = personal_data
         self.personal_datas[terminal_no]["data"] = personal_array[:,:-1]
         self.personal_datas[terminal_no]["y"] = personal_array[:,-1]
         # normed_speed = self.normalize_speed(personal_data)
