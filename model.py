@@ -67,5 +67,5 @@ class Model():
         smooth_l1_opion2 = tf.subtract(tf.abs(diffs), 0.5/sigma2)
 
         smooth_l1_result = tf.add(tf.multiply(smooth_l1_opion1, smooth_l1_sign),
-                                  tf.multiply(smooth_l1_opion2, tf.subtract(1,smooth_l1_sign)))
+                                  tf.multiply(smooth_l1_opion2, tf.subtract(1.0,smooth_l1_sign)))
         return smooth_l1_result

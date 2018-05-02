@@ -11,7 +11,7 @@ path_test = "/data/dm/test.csv"  # 测试文件
 path = "data/dm/train.csv"
 columns = ["TERMINALNO", "TIME", "TRIP_ID", "LONGITUDE", "LATITUDE", "DIRECTION", "HEIGHT", "SPEED",
                         "CALLSTATE", "Y"]
-valid = [ "LONGITUDE", "LATITUDE", "DIRECTION", "HEIGHT", "SPEED",
+valid = ["TIME", "LONGITUDE", "LATITUDE", "DIRECTION", "HEIGHT", "SPEED",
                         "CALLSTATE", "Y"]
 path_test_out = "model/"  # 预测结果输出路径为model/xx.csv,有且只能有一个文件并且是CSV格式。
 
