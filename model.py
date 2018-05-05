@@ -19,8 +19,10 @@ class Model():
         self.Y = tf.placeholder(
             tf.float32, [self.args.batch_size, self.args.time_step, self.args.output_size])
 
+        # predict形状：[batch_size,time_step,1]
         self.pred,self.final_state = self.lstm(self.X)
-        self.loss = self.SmoothL1(self.pred,self.Y,1)
+        # smooth l1 loss 损失函数
+        self.loss = self.SmoothL1(self.pred, self.Y, 1)
 
     def lstm(self,X):
         # 输入层、输出层权重、偏置
@@ -68,4 +70,4 @@ class Model():
 
         smooth_l1_result = tf.add(tf.multiply(smooth_l1_opion1, smooth_l1_sign),
                                   tf.multiply(smooth_l1_opion2, tf.subtract(1.0,smooth_l1_sign)))
-        return smooth_l1_result
+        return tf.reduce_mean(smooth_l1_result)
